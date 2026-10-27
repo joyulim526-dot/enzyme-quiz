@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="ko"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>효소에 빠져버렸어...</title>
+  <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&amp;family=Gowun+Dodum&amp;display=swap" rel="stylesheet">
+  <style>
+    :root { --ink:#173e34; --muted:#527084; --cream:#eaf7ff; --coral:#ef8fb2; --line:#c9e4f2; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:'Gowun Dodum',sans-serif; color:var(--ink); }
+    .app-shell { width:100%; min-height:100%; background-color:#eaf7ff; background-image:linear-gradient(135deg,#f2fbff 0%,#dff4ff 45%,#cceaff 75%,#edf9ff 100%); }
+    .display { font-family:'Gaegu','Gowun Dodum',sans-serif; }
+    .header-inner { position:relative; justify-content:flex-end; }
+    .title-block { position:absolute; left:50%; transform:translateX(-50%); text-align:center; }
+    @media (max-width:640px) { .title-block { position:static; transform:none; margin:0 auto; order:1; } .header-inner { justify-content:center; } .score-panel { order:2; } }
+    .card { box-shadow:0 16px 48px rgba(23,62,52,.09); }
+    .choice { width:100%; text-align:left; border:1.5px solid var(--line); background:#fff; border-radius:16px; padding:15px 18px; transition:.18s ease; }
+    .choice:hover:not(:disabled) { border-color:var(--coral); transform:translateY(-2px); }
+    .choice.selected { border-color:var(--ink); background:#e8f2e8; box-shadow:inset 0 0 0 1px var(--ink); }
+    .choice:disabled { cursor:default; }
+    button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible { outline:3px solid #e37758; outline-offset:3px; }
+    .field { width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:12px; background:white; color:var(--ink); }
+    .primary { background:var(--ink); color:white; border-radius:14px; padding:13px 24px; transition:transform .2s,opacity .2s; }
+    .primary:hover:not(:disabled) { transform:translateY(-2px); }
+    .vertical-add-button { writing-mode:horizontal-tb; min-height:0; width:100%!important; position:static; letter-spacing:0; background:#7dd3fc; color:#173e34; box-shadow:0 6px 16px rgba(71,160,201,.16); z-index:2; padding:10px 12px; }
+    .vertical-add-button:hover:not(:disabled) { background:#f7b6d0; }
+    .quiz-layout { position:relative; display:grid; grid-template-columns:minmax(0, 1fr) 220px; gap:24px; align-items:start; }
+    .quiz-main { width:100%; max-width:760px; margin:0; }
+    .add-sidebar { position:relative; top:0; right:0; width:220px; }
+    @media (max-width:900px) { .quiz-layout { grid-template-columns:1fr; } .quiz-main { margin:0 auto; } .add-sidebar { width:100%; max-width:760px; margin:0 auto; } }
+    .primary:disabled { opacity:.45; cursor:not-allowed; }
+    .manage-question-item { background:#fff; border:1px solid #c9e4f2; border-radius:12px; padding:10px; }
+    .manage-question-actions { display:flex; gap:6px; margin-top:8px; }
+    .manage-question-actions button { flex:1; border-radius:9px; padding:7px 6px; font-size:12px; font-weight:700; }
+    .manage-edit { background:#e0f2fe; color:#24516b; }
+    .manage-delete { background:#fff0f5; color:#9f3159; }
+    .appear { animation:rise .45s ease both; }
+    @keyframes rise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    [hidden] { display:none!important; }
+  </style>
+  <script src="https://cdn.tailwindcss.com/3.4.17" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.577.0/dist/umd/lucide.min.js" type="text/javascript"></script>
+  
+  
+  
+ </head>
+ <body data-template-id="__page-root" style="background: rgb(234, 247, 255);">
+  <div class="app-shell">
+   <header class="w-full px-5 sm:px-8 pt-8 pb-5">
+    <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-3 header-inner">
+     <div class="title-block">
+      <p data-template-id="eyebrow" class="canva-text tracking-widest uppercase mb-1" style="color: rgb(227, 119, 88); font-weight: 700; font-style: normal; font-size: 12px; letter-spacing: 0.16rem;">LEARN · PLAY · GROW</p>
+      <h1 data-template-id="page-title" class="canva-text display font-bold leading-tight" style="color: rgb(23, 62, 52); font-weight: 700; font-style: normal; font-size: 32px;">효소에 빠져버렸어...</h1>
+     </div>
+     <div data-template-id="score-panel" class="canva-panel rounded-2xl px-5 py-3 flex items-center gap-3 shadow-sm" style="background: rgb(255, 255, 255);">
+      <span aria-hidden="true">♥</span> <span data-template-id="score-label" class="canva-text" style="color: rgb(23, 62, 52); font-weight: 700; font-style: normal; font-size: 16px;">호감도</span> <strong id="score" aria-live="polite">0</strong>
+     </div>
+    </div>
+   </header>
+   <main class="w-full max-w-6xl mx-auto px-5 sm:px-8 pb-14 quiz-layout">
+    <section class="quiz-main" aria-labelledby="quiz-heading">
+     <div data-template-id="quiz-card" class="canva-card card rounded-3xl p-6 sm:p-9 min-h-[390px]" style="background: rgb(255, 255, 255);">
+      <div class="flex justify-between items-center gap-4 mb-7">
+       <h2 id="quiz-heading" data-template-id="quiz-heading-text" class="canva-text font-bold" style="color: rgb(23, 62, 52); font-weight: 400; font-style: normal; font-size: 24px;">효소에 빠져버렸어...</h2><span id="progress" class="text-sm font-bold" aria-live="polite"></span>
+      </div>
+      <div id="load-state" role="status">
+       <p data-template-id="loading-text" class="canva-text" style="color: rgb(96, 119, 107); font-weight: 400; font-style: normal; font-size: 16px;">문제를 불러오는 중입니다…</p>
+      </div>
+      <div id="load-error" hidden="" role="alert">
+       <p data-template-id="load-error-text" class="canva-text mb-4" style="color: rgb(177, 77, 57); font-weight: 400; font-style: normal; font-size: 16px;">문제 목록을 불러오지 못했습니다. 다시 시도해 주세요.</p><button id="retry" type="button" data-template-id="retry-button" class="canva-button primary" style="background: rgb(23, 62, 52); color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 16px;">다시 시도</button>
+      </div>
+      <div id="quiz-view" hidden="" class="appear">
+       <h3 id="question-text" class="font-bold leading-relaxed mb-6 text-[22px]"></h3>
+       <div id="choices" class="grid gap-3 mb-6" role="group" aria-label="선택지"></div>
+       <form id="short-form" hidden="">
+        <label data-template-id="short-label" for="short-answer" class="canva-text block mb-2 font-bold" style="color: rgb(23, 62, 52); font-weight: 400; font-style: normal; font-size: 16px;">답을 입력해 주세요</label> <input id="short-answer" class="field mb-5" autocomplete="off">
+       </form><button id="submit-answer" data-template-id="submit-button" type="button" class="canva-button primary" style="background: rgb(23, 62, 52); color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 16px;">답 제출하기</button>
+       <div id="feedback" hidden="" class="mt-6 rounded-2xl p-5 bg-[#f2f7ef]" role="status" aria-live="polite">
+        <p id="correct-message" data-template-id="correct-text" hidden="" class="canva-text font-bold" style="color: rgb(33, 103, 75); font-weight: 400; font-style: normal; font-size: 16px;">정답! 호감도가 상승합니다</p>
+        <p id="wrong-message" data-template-id="wrong-text" hidden="" class="canva-text font-bold" style="color: rgb(177, 77, 57); font-weight: 400; font-style: normal; font-size: 16px;">오답! 호감도가 하락합니다</p>
+        <p id="emoji-line" class="text-2xl mt-2" aria-hidden="true"></p>
+       </div><button id="next-button" data-template-id="next-button" type="button" hidden="" class="canva-button primary mt-5" style="background: rgb(23, 62, 52); color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 16px;">다음</button>
+      </div>
+      <div id="result-view" hidden="" class="appear">
+       <h3 data-template-id="result-heading" class="canva-text font-bold mb-4" style="color: rgb(23, 62, 52); font-weight: 400; font-style: normal; font-size: 19px;">
+</h3>
+       <p id="result-count" class="mb-2"></p>
+       <p id="result-score" class="font-bold mb-6"></p><button id="restart-button" data-template-id="restart-button-text" type="button" class="canva-button primary" style="background: rgb(23, 62, 52); color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 16px;">다시 시작하기</button>
+      </div>
+     </div>
+    </section>
+    <aside class="add-sidebar" aria-labelledby="add-heading">
+     <div data-template-id="add-panel" class="canva-panel rounded-3xl p-4 border border-[#c9e4f2] relative" style="background: rgba(255,255,255,.88);">
+      <span class="text-xl" aria-hidden="true">✦</span>
+      <h2 id="add-heading" data-template-id="add-heading-text" class="canva-text font-bold mt-2 mb-2" style="color: rgb(23, 62, 52); font-weight: 400; font-style: normal; font-size: 19px;">새 문제 만들기</h2>
+      <p data-template-id="add-description" class="canva-text mb-5 leading-relaxed" style="color: rgb(96, 119, 107); font-weight: 400; font-style: normal; font-size: 16px;"></p><button id="toggle-form" data-template-id="toggle-form-button" type="button" aria-expanded="false" aria-controls="add-form" class="canva-button primary w-full vertical-add-button" style="background: rgb(125, 211, 252); color: rgb(23, 62, 52); font-weight: 400; font-style: normal; font-size: 16px;">문제 추가하기</button>
+      <form id="add-form" hidden="" class="mt-6 space-y-4">
+       <div><label data-template-id="question-label" for="new-question" class="canva-text block mb-1" style="color: rgb(23, 62, 52); font-weight: 400; font-style: normal; font-size: 16px;">질문</label><textarea id="new-question" class="field" rows="3" required="" maxlength="500"></textarea>
+       </div>
+       <div><label data-template-id="type-label" for="question-type" class="canva-text block mb-1" style="color: rgb(23, 62, 52); font-weight: 400; font-style: normal; font-size: 16px;">문제 유형</label><select id="question-type" class="field"><option value="multiple">객관식</option><option value="short">주관식</option></select>
+       </div>
+       <div id="option-fields" class="space-y-3">
+        <div><label data-template-id="option-a-label" for="option-a" class="canva-text block mb-1" style="color: rgb(23, 62, 52); font-weight: 400; font-style: normal; font-size: 16px;">선택지 A</label><input id="option-a" class="field" maxlength="200">
+        </div>
+        <div><label data-template-id="option-b-label" for="option-b" class="canva-text block mb-1" style="color: rgb(23, 62, 52); font-weight: 400; font-style: normal; font-size: 16px;">선택지 B</label><input id="option-b" class="field" maxlength="200">
+        </div>
+        <div><label data-template-id="option-c-label" for="option-c" class="canva-text block mb-1" style="color: rgb(23, 62, 52); font-weight: 400; font-style: normal; font-size: 16px;">선택지 C (선택 사항)</label><input id="option-c" class="field" maxlength="200">
+        </div>
+        <div><label data-template-id="option-d-label" for="option-d" class="canva-text block mb-1" style="color: rgb(23, 62, 52); font-weight: 400; font-style: normal; font-size: 16px;">선택지 D (선택 사항)</label><input id="option-d" class="field" maxlength="200">
+        </div>
+       </div>
+       <div><label id="answer-label" data-template-id="answer-label-text" for="new-answer" class="canva-text block mb-1" style="color: rgb(23, 62, 52); font-weight: 400; font-style: normal; font-size: 16px;">정답</label><input id="new-answer" class="field" required="" maxlength="200" aria-describedby="answer-hint">
+        <p id="answer-hint" class="text-xs mt-1 text-[#60776b]"></p>
+       </div><button id="save-question" data-template-id="save-button" type="submit" class="canva-button primary w-full" style="background: rgb(23, 62, 52); color: rgb(255, 255, 255); font-weight: 400; font-style: normal; font-size: 16px;">문제 저장하기</button>
+      </form>
+      <p id="save-status" class="mt-4 text-sm" role="status" aria-live="polite"></p>
+       <button id="manage-questions-toggle" type="button" class="w-full mt-3 rounded-xl border border-[#b9dff2] bg-white px-3 py-2 text-sm font-bold" aria-expanded="false" aria-controls="manage-questions">문제 수정·삭제</button>
+       <div id="manage-questions" hidden class="mt-3 space-y-2">
+        <p class="text-xs" style="color:#527084;">수정하거나 삭제할 문제를 선택하세요.</p>
+        <div id="question-management-list" class="space-y-2"></div>
+       </div>
+     </div>
+    </aside>
+   </main>
+   <footer class="w-full text-center pb-6 px-5">
+    <p data-template-id="footer-text" class="canva-text" style="color: rgb(96, 119, 107); font-weight: 400; font-style: normal; font-size: 16px;">정답을 맞힐수록 가까워지는 그와 나의 최종 반응.</p>
+   </footer>
+  </div>
+  <script>
+
+    const $ = id => document.getElementById(id);
+    const STORAGE_KEY = 'enzyme-romance-quiz-v1';
+    const letters = ['A','B','C','D'];
+    const starterQuestions = [
+      {question:'효소가 생명체 내 화학 반응을 촉진하는 주된 원리는?', question_type:'multiple', option_a:'반응의 활성화 에너지를 낮춘다.', option_b:'반응물의 양을 항상 증가시킨다.', option_c:'반응의 반응열을 낮춘다.', option_d:'반응 후 생성물을 모두 분해한다.', answer:'A'},
+      {question:'효소의 기질 특이성을 가장 잘 설명한 것은?', question_type:'multiple', option_a:'모든 효소가 모든 기질과 결합한다.', option_b:'효소는 입체 구조와 화학적 성질이 맞는 기질에 선택적으로 작용한다.', option_c:'기질의 종류와 관계없이 반응 속도는 같다.', option_d:'효소는 반응이 끝나면 반드시 소모된다.', answer:'B'},
+      {question:'감자즙에 과산화 수소를 넣었을 때 거품이 발생했다. 이때 거품의 주된 구성 성분은?', question_type:'multiple', option_a:'질소', option_b:'수소', option_c:'산소', option_d:'이산화탄소', answer:'C'},
+      {question:'효소는 반응이 끝난 뒤에도 다른 기질과 결합해 반복적으로 작용할 수 있다.', question_type:'multiple', option_a:'참', option_b:'거짓', option_c:'', option_d:'', answer:'A'},
+      {question:'효소가 있으면 화학 반응의 평형이 항상 생성물 쪽으로 이동한다.', question_type:'multiple', option_a:'참', option_b:'거짓', option_c:'', option_d:'', answer:'B'},
+      {question:'DNA 전기영동에서 DNA 조각이 이동하는 주된 원리는 무엇일까?', question_type:'multiple', option_a:'DNA가 열에 의해 끓으면서 이동한다.', option_b:'전기장 속에서 DNA 전하에 의해 이동한다.', option_c:'DNA가 효소에 의해 모두 단백질로 변해 이동한다.', option_d:'DNA 조각은 전하와 크기에 관계없이 같은 속도로 이동한다.', answer:'B'},
+      {question:'같은 조건에서 DNA 조각 2개를 전기영동했더니 조각 A가 조각 B보다 더 멀리 이동했다. 일반적인 아가로스 겔 전기영동에서 가장 적절한 해석은?', question_type:'multiple', option_a:'A의 DNA에는 인산기가 없다.', option_b:'A의 DNA 조각이 더 클 가능성이 높다.', option_c:'A의 DNA 조각이 더 작을 가능성이 높다.', option_d:'', answer:'C'},
+      {question:'녹말 용액에 녹말 분해 효소가 들어 있는 소화제를 넣고 충분히 반응시킨 뒤 아이오딘 용액을 떨어뜨렸다. 예상되는 색 변화는?', question_type:'multiple', option_a:'청람색으로 변한다.', option_b:'황갈색을 유지한다.', option_c:'붉은색으로 변한다.', option_d:'보라색으로 변한다.', answer:'B'},
+      {question:'단백질 용액에 단백질 분해 효소가 들어 있지 않은 소화제를 넣고 충분히 반응시킨 뒤 뷰렛 용액을 떨어뜨렸다. 예상되는 색 변화는?', question_type:'multiple', option_a:'청록색을 유지한다.', option_b:'보라색으로 변한다.', option_c:'노란색으로 변한다.', option_d:'붉은색으로 변한다.', answer:'B'}
+    ];
+    let questions = loadQuestions(), current = 0, score = 0, correct = 0, answered = false, selected = null, editingIndex = null;
+    function loadQuestions() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+        return Array.isArray(saved) && saved.length ? saved : starterQuestions.map(q => ({...q}));
+      } catch (_) { return starterQuestions.map(q => ({...q})); }
+    }
+    function saveQuestions() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(questions)); }
+      catch (_) { $('save-status').textContent = '이 브라우저에서는 저장이 제한될 수 있습니다.'; }
+    }
+    function renderQuestion() {
+      $('load-state').hidden = true; $('load-error').hidden = true; $('result-view').hidden = true;
+      if (current >= questions.length) { renderResult(); return; }
+      const q = questions[current];
+      answered = false; selected = null;
+      $('quiz-view').hidden = false;
+      $('question-text').textContent = q.question;
+      $('progress').textContent = `${current + 1} / ${questions.length}`;
+      $('feedback').hidden = true;
+      $('correct-message').hidden = true; $('wrong-message').hidden = true;
+      $('next-button').hidden = true; $('submit-answer').hidden = false;
+      $('short-answer').value = ''; $('short-answer').disabled = false;
+      $('short-form').hidden = q.question_type !== 'short';
+      $('choices').hidden = q.question_type === 'short';
+      $('choices').replaceChildren();
+      if (q.question_type === 'multiple') {
+        letters.forEach(letter => {
+          const value = q['option_' + letter.toLowerCase()];
+          if (!value) return;
+          const button = document.createElement('button');
+          button.type = 'button'; button.className = 'choice';
+          button.textContent = `${letter}. ${value}`;
+          button.setAttribute('aria-pressed','false');
+          button.addEventListener('click', () => {
+            if (answered) return;
+            selected = letter;
+            $('choices').querySelectorAll('button').forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-pressed','false'); });
+            button.classList.add('selected'); button.setAttribute('aria-pressed','true');
+          });
+          $('choices').appendChild(button);
+        });
+      }
+      $('score').textContent = score;
+      $('save-status').textContent = '';
+    }
+    function submitAnswer() {
+      if (answered || !questions[current]) return;
+      const q = questions[current];
+      const response = q.question_type === 'multiple' ? selected : $('short-answer').value.trim();
+      if (!response) { $('save-status').textContent = '답을 선택하거나 입력해 주세요.'; return; }
+      $('save-status').textContent = ''; answered = true;
+      const normalize = value => String(value).normalize('NFC').trim().toLocaleLowerCase('ko-KR');
+      const isCorrect = q.question_type === 'multiple'
+        ? response === String(q.answer).trim().toUpperCase()
+        : normalize(response) === normalize(q.answer);
+      if (isCorrect) { score += 10; correct++; } else score -= 10;
+      $('score').textContent = score; $('feedback').hidden = false;
+      $('correct-message').hidden = !isCorrect; $('wrong-message').hidden = isCorrect;
+      $('emoji-line').textContent = isCorrect ? '💖 💕 ❤️ 💗 💖 💕 ❤️' : '😭 😢 💔 😢 😭';
+      $('submit-answer').hidden = true; $('next-button').hidden = false;
+      $('choices').querySelectorAll('button').forEach(b => b.disabled = true);
+      $('short-answer').disabled = true;
+    }
+    function renderResult() {
+      $('quiz-view').hidden = true; $('result-view').hidden = false;
+      $('progress').textContent = `${questions.length} / ${questions.length}`;
+      $('result-count').textContent = `정답 ${correct}개 · 오답 ${Math.max(0, questions.length - correct)}개`;
+      $('result-score').textContent = `최종 호감도 ${score}점`;
+      const heading = document.querySelector('[data-template-id="result-heading"]');
+      if (heading) heading.textContent = score >= questions.length * 5 ? '그와의 반응이 아주 잘 맞았어요! 💗' : '아직 알아갈 시간이 더 필요해요 ✦';
+    }
+    function renderQuestionManager() {
+      const list = $('question-management-list');
+      list.replaceChildren();
+      if (!questions.length) {
+        const empty = document.createElement('p');
+        empty.className = 'text-xs'; empty.textContent = '등록된 문제가 없습니다.';
+        list.appendChild(empty); return;
+      }
+      questions.forEach((q, index) => {
+        const item = document.createElement('div');
+        item.className = 'manage-question-item';
+        const title = document.createElement('p');
+        title.className = 'text-sm font-bold';
+        title.textContent = `${index + 1}. ${q.question}`;
+        const meta = document.createElement('p');
+        meta.className = 'text-xs mt-1'; meta.style.color = '#527084';
+        meta.textContent = q.question_type === 'multiple' ? '객관식' : '주관식';
+        const actions = document.createElement('div'); actions.className = 'manage-question-actions';
+        const edit = document.createElement('button');
+        edit.type = 'button'; edit.className = 'manage-edit'; edit.textContent = '수정';
+        edit.addEventListener('click', () => {
+          editingIndex = index;
+          $('new-question').value = q.question;
+          $('question-type').value = q.question_type;
+          letters.forEach(l => $('option-' + l.toLowerCase()).value = q['option_' + l.toLowerCase()] || '');
+          $('new-answer').value = q.answer;
+          syncType(); $('add-form').hidden = false;
+          $('toggle-form').setAttribute('aria-expanded', 'true');
+          $('save-question').textContent = '수정 내용 저장';
+          $('manage-questions').hidden = true;
+          $('manage-questions-toggle').setAttribute('aria-expanded', 'false');
+          $('save-status').textContent = `문제 ${index + 1}번을 수정 중입니다.`;
+          $('new-question').focus();
+        });
+        const del = document.createElement('button');
+        del.type = 'button'; del.className = 'manage-delete'; del.textContent = '삭제';
+        del.addEventListener('click', () => {
+          if (!confirm(`"${q.question}" 문제를 삭제할까요?`)) return;
+          questions.splice(index, 1);
+          if (editingIndex === index) {
+            editingIndex = null; $('add-form').reset(); syncType();
+            $('save-question').textContent = '문제 저장하기';
+          } else if (editingIndex !== null && editingIndex > index) editingIndex--;
+          if (current >= questions.length) current = Math.max(0, questions.length - 1);
+          saveQuestions(); renderQuestionManager();
+          $('save-status').textContent = '문제가 삭제되었습니다.';
+          if (questions.length) {
+            if (!$('result-view').hidden || !$('quiz-view').hidden) renderQuestion();
+            $('progress').textContent = `${Math.min(current + 1, questions.length)} / ${questions.length}`;
+          } else {
+            $('quiz-view').hidden = true; $('result-view').hidden = false;
+            document.querySelector('[data-template-id="result-heading"]').textContent = '문제가 없습니다 ✦';
+            $('result-count').textContent = '새 문제를 추가해 주세요.';
+            $('result-score').textContent = '';
+            $('progress').textContent = '0 / 0';
+          }
+        });
+        actions.append(edit, del); item.append(title, meta, actions); list.appendChild(item);
+      });
+    }
+    function syncType() {
+      const multiple = $('question-type').value === 'multiple';
+      $('option-fields').hidden = !multiple;
+      $('answer-hint').textContent = multiple ? '정답 선택지의 알파벳 A, B, C, D 중 하나를 입력하세요.' : '정답 문구를 입력하세요. 대소문자와 앞뒤 공백은 구분하지 않습니다.';
+      letters.forEach(l => $('option-' + l.toLowerCase()).required = multiple && (l === 'A' || l === 'B'));
+      $('new-answer').placeholder = multiple ? '예: A' : '예: 최적 조건';
+    }
+    $('submit-answer').addEventListener('click', submitAnswer);
+    $('short-form').addEventListener('submit', e => { e.preventDefault(); submitAnswer(); });
+    $('next-button').addEventListener('click', () => { if (!answered) return; current++; renderQuestion(); });
+    $('restart-button').addEventListener('click', () => { current = 0; correct = 0; score = 0; $('score').textContent = '0'; renderQuestion(); });
+    $('retry').addEventListener('click', renderQuestion);
+    $('toggle-form').addEventListener('click', () => {
+      const open = $('add-form').hidden;
+      $('add-form').hidden = !open;
+      $('toggle-form').setAttribute('aria-expanded', String(open));
+      if (open) $('new-question').focus();
+    });
+    $('question-type').addEventListener('change', syncType);
+    $('manage-questions-toggle').addEventListener('click', () => {
+      const open = $('manage-questions').hidden;
+      $('manage-questions').hidden = !open;
+      $('manage-questions-toggle').setAttribute('aria-expanded', String(open));
+      if (open) renderQuestionManager();
+    });
+    $('add-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const type = $('question-type').value, answer = $('new-answer').value.trim();
+      const options = Object.fromEntries(letters.map(l => ['option_' + l.toLowerCase(), type === 'multiple' ? $('option-' + l.toLowerCase()).value.trim() : '']));
+      if (type === 'multiple' && (!/^[A-D]$/i.test(answer) || !options['option_' + answer.toLowerCase()])) {
+        $('save-status').textContent = '입력한 정답에 해당하는 선택지가 있어야 합니다.'; return;
+      }
+      if (type === 'multiple' && (!options.option_a || !options.option_b)) {
+        $('save-status').textContent = '객관식은 선택지 A와 B를 입력해 주세요.'; return;
+      }
+      const record = {question:$('new-question').value.trim(), question_type:type, ...options, answer:type === 'multiple' ? answer.toUpperCase() : answer};
+      if (editingIndex !== null) {
+        questions[editingIndex] = record;
+        $('save-status').textContent = '문제가 수정되었습니다.';
+        editingIndex = null;
+      } else {
+        questions.push(record);
+        $('save-status').textContent = '문제가 저장되었습니다. 퀴즈 목록에 추가됩니다.';
+      }
+      saveQuestions(); $('add-form').reset(); syncType();
+      $('save-question').textContent = '문제 저장하기';
+      renderQuestionManager();
+      $('progress').textContent = `${Math.min(current + 1, questions.length)} / ${questions.length}`;
+      if (current < questions.length && !$('quiz-view').hidden) renderQuestion();
+    });
+    syncType(); renderQuestionManager(); renderQuestion();
+
+  </script>
+ 
+</body></html>
